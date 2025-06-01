@@ -56,3 +56,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class OtpVerify(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.IntegerField()
+
+    def __str__(self):
+        return str(self.user)
