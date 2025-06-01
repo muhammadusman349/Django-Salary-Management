@@ -44,3 +44,37 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    permission_classes = []
+    serializer_class = ChangePasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={'user':self.request.user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"password":"Password Changed Successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ForgetPasswordView(generics.GenericAPIView):
+    permission_classes = []
+    serializer_class = ForgetPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            return Response({'opt': 'successfully send OTP '}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResetPasswordView(generics.GenericAPIView):
+    permission_classes = []
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            return Response({'password': 'successfully set New Password'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
