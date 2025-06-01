@@ -3,6 +3,8 @@ from .models import User, OtpVerify
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
 import pyotp
 import base64
 
@@ -218,6 +220,19 @@ class ForgetPasswordSerializer(serializers.Serializer):
                 otp_obj.user = userObj
                 otp_obj.otp = otp
                 otp_obj.save()
+                # Send email with OTP
+                subject = 'Password Reset OTP'
+                message = f'Your OTP for password reset is: {otp}'
+                from_email = settings.DEFAULT_FROM_EMAIL
+                recipient_list = [email]
+
+                send_mail(
+                    subject,
+                    message,
+                    from_email,
+                    recipient_list,
+                    fail_silently=False,
+                )
             except Exception as e:
                 print("Exception", e)
                 raise serializers.ValidationError({"email":"Valid email is Required."})
