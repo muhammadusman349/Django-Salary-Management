@@ -32,8 +32,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     ROLES = (
+        ('ADMIN', 'Admin'),
         ('HR', 'HR'),
-        ('MANAGER', 'Manager'),
         ('EMPLOYEE', 'Employee'),
     )
 
