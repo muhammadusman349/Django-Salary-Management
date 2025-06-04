@@ -18,3 +18,10 @@ employee_perm_choices = [
     ("change_employee", "Can Change Employee"),
     ("delete_employee", "Can Delete Employee"),
 ]
+
+organization_perm_choices = [
+    ("view_organization", "Can View Organization"),
+    ("add_organization", "Can Add Organization"),
+    ("change_organization", "Can Change Organization"),
+    ("delete_organization", "Can Delete Organization"),
+]
