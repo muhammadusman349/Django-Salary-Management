@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Department, Position, Employee
+from .models import Department, Position, Employee, Organization, EmployeeInvitation
 from accounts.serializers import UserSerializer
 
 
@@ -47,3 +47,33 @@ class EmployeeSerializer(serializers.ModelSerializer):
             user_serializer.is_valid(raise_exception=True)
             user_serializer.save()
         return super().update(instance, validated_data)
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = ('id', 'name', 'admin', 'members', 'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class EmployeeInvitationSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    position_title = serializers.CharField(source='position.title', read_only=True)
+    department_name = serializers.CharField(source='position.department.name', read_only=True)
+
+    class Meta:
+        model = EmployeeInvitation
+        fields = ('id', 'email', 'status', 'token', 'organization', 'organization_name', 'position', 'position_title', 'department_name', 'invited_by', 'is_accepted', 'created_at', 'expires_at', 'last_sent_at')
+        read_only_fields = ['token', 'invited_by', 'is_accepted', 'created_at', 'expires_at', 'last_sent_at']
+
+
+class EmployeeInvitationAcceptSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    password = serializers.CharField(max_length=120, required=True, style={'input_type': 'password'}, write_only=True)
+    accept = serializers.BooleanField()
+
+
+class EmployeeResendInvitationSerializer(serializers.Serializer):
+    invitation_id = serializers.IntegerField()

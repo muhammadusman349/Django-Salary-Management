@@ -1,10 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from .utils import department_perm_choices, position_perm_choices, employee_perm_choices
+from django.utils import timezone
+from datetime import timedelta, date
+from .utils import (department_perm_choices, position_perm_choices,
+                    employee_perm_choices, organization_perm_choices)
 from .import GENDER_CHOICES, STATUS_CHOICES, MARITAL_STATUS
 from accounts.models import User
-from datetime import date
+import secrets
 
 # Create your models here.
 
@@ -174,24 +177,111 @@ class EmployeeRole(models.Model):
         super(EmployeeRole, self).save(*args, **kwargs)
 
 
+class Organization(models.Model):
+    name = models.CharField(max_length=100)
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='admin_of_organization')
+    employees = models.ManyToManyField(Employee, related_name='members_of_organization')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class OrganizationPermission(models.Model):
+    code = models.CharField(max_length=120)
+    name = models.CharField(max_length=120)
+
+    def __str__(self):
+        return str(self.name)
+
+    def get_code_name(self):
+        try:
+            _ = Permission.objects.get_or_create(
+                codename=self.code,
+                name=self.name,
+                content_type=ContentType.objects.get_for_model(Organization),
+            )
+        except Exception as e:
+            print("exception in get code name ORG", e)
+        return self.code
+
+
+class OrganizationRole(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=120)
+    permission = models.ManyToManyField(OrganizationPermission)
+    description = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return str(self.name)
+
+    def save(self, *args, **kwargs):
+        super(OrganizationRole, self).save(*args, **kwargs)
+
+
+class EmployeeInvitation(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+        ('expired', 'Expired')
+    ]
+
+    email = models.EmailField()
+    token = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
+    is_accepted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Invitation for {self.email} to {self.organization}"
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_urlsafe(50)
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(days=7)
+        if self._state.adding and not self.last_sent_at:
+            self.last_sent_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    def resend(self):
+        self.expires_at = timezone.now() + timedelta(days=7)
+        self.last_sent_at = timezone.now()
+        self.save()
+        return self
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+
 def setup_permissions():
     try:
         for i in department_perm_choices:
             try:
                 obj, created = DepartmentPermission.objects.get_or_create(code=i[0], name=i[1])
-                code=i[0], name=i[1]
             except Exception as e:
                 print("Exception as", e)
         for i in position_perm_choices:
             try:
                 obj, created = PositionPermission.objects.get_or_create(code=i[0], name=i[1])
-                code=i[0], name=i[1]
             except Exception as e:
                 print("Exception as", e)
         for i in employee_perm_choices:
             try:
                 obj, created = EmployeePermission.objects.get_or_create(code=i[0], name=i[1])
-                code=i[0], name=i[1]
+            except Exception as e:
+                print("Exception as", e)
+        for i in organization_perm_choices:
+            try:
+                obj, created = OrganizationPermission.objects.get_or_create(code=i[0], name=i[1])
             except Exception as e:
                 print("Exception as", e)
     except Exception as e:
