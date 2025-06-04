@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .models import setup_permissions
 
 urlpatterns = [
     # Department URLs
@@ -14,3 +15,5 @@ urlpatterns = [
     path('employees/', views.EmployeeView.as_view(), name='employee-list'),
     path('employees/<int:id>/', views.EmployeeView.as_view(), name='employee-detail'),
 ]
+
+setup_permissions()
