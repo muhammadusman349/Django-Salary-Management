@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invitation</title>
+</head>
+<body>
+    <p>Hello,</p>
+    <p>You’ve been invited to join <strong>{{ organization }}</strong> as a <strong>{{ position }}</strong>.</p>
+    <p>Invited by: {{ invited_by }}</p>
+    <p>
+        Click below to accept the invitation:<br>
+        <a href="{{ acceptance_url }}">{{ acceptance_url }}</a>
+    </p>
+    <p>This invitation will expire on <strong>{{ expires_at }}</strong>.</p>
+    <br>
+    <p>Thanks,<br>The {{ organization }} Team</p>
+</body>
+</html>
