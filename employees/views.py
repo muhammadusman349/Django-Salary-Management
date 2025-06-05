@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from .decorator import permission_required
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import Department, Position, Employee, Organization, EmployeeInvitation
@@ -369,3 +370,45 @@ class ResendInvitationView(generics.GenericAPIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class EmployeeInvitationListView(generics.ListAPIView, generics.RetrieveAPIView):
+    queryset = EmployeeInvitation.objects.all()
+    serializer_class = EmployeeInvitationSerializer
+    permission_classes = [permissions.IsAdminUser]
+    lookup_field = 'id'
+
+    def get(self, request, *args, **kwargs):
+        id = self.kwargs.get('id', None)
+        if id:
+            return self.retrieve(request, *args, **kwargs)
+
+        queryset = self.filter_queryset(self.get_queryset())
+        response = super().list(request, *args, **kwargs)
+
+        # Count invitations by status
+        status_counts = {
+            'total': queryset.count(),
+            'pending': queryset.filter(status='pending').count(),
+            'accepted': queryset.filter(status='accepted').count(),
+            'declined': queryset.filter(status='declined').count(),
+            'expired': queryset.filter(status='expired').count(),
+        }
+
+        response.data = {
+            'invitations': response.data,
+            'status_counts': status_counts
+        }
+
+        return response
+
+
+class EmployeeProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = EmployeeProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        try:
+            return Employee.objects.select_related('user').get(user=self.request.user)
+        except Employee.DoesNotExist:
+            raise NotFound("Employee not found.")

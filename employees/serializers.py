@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Department, Position, Employee, Organization, EmployeeInvitation
-from accounts.serializers import UserSerializer
+from accounts.serializers import UserSerializer, UserProfileSerializer
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -78,3 +78,54 @@ class EmployeeInvitationAcceptSerializer(serializers.Serializer):
 
 class EmployeeResendInvitationSerializer(serializers.Serializer):
     invitation_id = serializers.IntegerField()
+
+
+class EmployeeProfileSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer()
+    added_by = serializers.CharField(source='added_by.full_name', read_only=True)
+
+    class Meta:
+        model = Employee
+        fields = [
+            'id',
+            'user',
+            'position',
+            'status',
+            'added_by',
+            'date_of_birth',
+            'gender',
+            'marital_status',
+            'nationality',
+            'address',
+            'city',
+            'state',
+            'country',
+            'postal_code',
+            'joining_date',
+            'leaving_date',
+            'personal_email',
+            'personal_phone',
+            'emergency_contact_name',
+            'emergency_contact_number',
+            'emergency_contact_relation',
+            'bank_name',
+            'bank_account_number',
+            'is_active',
+            'is_on_leave',
+        ]
+        read_only_fields = ['id', 'status', 'user', 'created_at', 'updated_at', 'is_active', 'leaving_date', 'position']
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+
+        # Update user
+        user_serializer = UserProfileSerializer(instance=instance.user, data=user_data, partial=True)
+        user_serializer.is_valid(raise_exception=True)
+        user_serializer.save()
+
+        # Update employee fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance

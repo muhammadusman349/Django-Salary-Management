@@ -23,6 +23,14 @@ urlpatterns = [
     path('invitations/send/', views.SendInvitationView.as_view(), name='send-invitation'),
     path('invitations/accept/', views.AcceptInvitationView.as_view(), name='accept-invitation'),
     path('invitations/resend/', views.ResendInvitationView.as_view(), name='resend-invitation'),
+
+    # Employee Invitation List View
+    path('employee-invitations/list/', views.EmployeeInvitationListView.as_view(), name='employee-invitation-list'),
+    path('employee-invitations/list/<int:id>/', views.EmployeeInvitationListView.as_view(), name='employee-invitation-detail'),
+
+    # Employee Profile View
+    path('employee/profile/', views.EmployeeProfileView.as_view(), name='employee-profile'),
+    
 ]
 
 setup_permissions()
