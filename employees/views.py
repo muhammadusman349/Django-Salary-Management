@@ -3,13 +3,12 @@ from .decorator import permission_required
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from .models import Department, Position, Employee, Organization, EmployeeInvitation
 from .serializers import *
+from .tasks import send_invitation_email_task
 from accounts.models import User
 from datetime import timedelta
-from django.conf import settings
+
 
 class DepartmentView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -112,7 +111,7 @@ class EmployeeView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPI
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=user)
+        serializer.save(user=user, added_by=request.user)
 
         return Response(
             EmployeeSerializer(serializer.instance).data,
@@ -231,7 +230,7 @@ class SendInvitationView(generics.GenericAPIView):
         )
 
         # Send email
-        self.send_invitation_email(invitation)
+        send_invitation_email_task.delay(invitation.id, is_resend=False)
 
         return Response({
             'message': 'Invitation sent successfully.',
@@ -239,29 +238,10 @@ class SendInvitationView(generics.GenericAPIView):
             'token': invitation.token
         }, status=status.HTTP_201_CREATED)
 
-    def send_invitation_email(self, invitation):
-        subject = f"Invitation to join {invitation.organization.name}"
-        acceptance_url = f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}"
-
-        message = render_to_string('emails/invitation.txt', {
-            'organization': invitation.organization,
-            'position': invitation.position,
-            'invited_by': invitation.invited_by.get_full_name(),
-            'acceptance_url': acceptance_url,
-            'expires_at': invitation.expires_at.strftime("%B %d, %Y")
-        })
-
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [invitation.email],
-            fail_silently=False,
-        )
-
 
 class AcceptInvitationView(generics.GenericAPIView):
     serializer_class = EmployeeInvitationAcceptSerializer
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -378,19 +358,7 @@ class ResendInvitationView(generics.GenericAPIView):
         invitation = invitation.resend()
 
         # Send invitation email
-        send_mail(
-            subject=f"Join {invitation.organization.name} - Invitation Reminder",
-            message=render_to_string('emails/invitation_reminder.txt', {
-                'organization': invitation.organization.name,
-                'position': invitation.position.title if invitation.position else '',
-                'invited_by': invitation.invited_by.get_full_name(),
-                'acceptance_url': f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}",
-                'expires_at': invitation.expires_at.strftime("%B %d, %Y")
-            }),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[invitation.email],
-            fail_silently=False,
-        )
+        send_invitation_email_task.delay(invitation.id, is_resend=True)
 
         return Response(
             {

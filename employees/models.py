@@ -105,6 +105,7 @@ class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
     position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, related_name='employees')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_employees')
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='M')
     marital_status = models.CharField(max_length=1, choices=MARITAL_STATUS, blank=True)

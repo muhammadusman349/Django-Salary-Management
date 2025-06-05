@@ -25,15 +25,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='position.department.name', read_only=True)
     age = serializers.IntegerField(read_only=True)
     tenure = serializers.IntegerField(read_only=True)
+    added_by = serializers.CharField(source='added_by.full_name', read_only=True)
 
     class Meta:
         model = Employee
-        fields = ('id', 'user', 'position','position_title', 'department_name', 'status', 'date_of_birth', 'gender', 'marital_status',
+        fields = ('id', 'user', 'added_by', 'position','position_title', 'department_name', 'status', 'date_of_birth', 'gender', 'marital_status',
                 'nationality', 'address', 'city', 'state', 'country', 'postal_code', 'joining_date',
                 'leaving_date', 'personal_email', 'personal_phone', 'emergency_contact_name',
                 'emergency_contact_number', 'emergency_contact_relation', 'bank_name','age','tenure',
                 'bank_account_number', 'is_active', 'is_on_leave', 'created_at', 'updated_at')
-        read_only_fields = ('created_at', 'updated_at')
+        read_only_fields = ('added_by', 'created_at', 'updated_at')
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', None)
@@ -52,7 +53,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
-        fields = ('id', 'name', 'admin', 'members', 'created_at', 'updated_at')
+        fields = ('id', 'name', 'admin', 'employees', 'created_at', 'updated_at')
         read_only_fields = ('created_at', 'updated_at')
 
 

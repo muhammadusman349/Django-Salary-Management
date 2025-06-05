@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invitation Reminder</title>
+</head>
+<body>
+    <p>Hello again,</p>
+    <p>This is a reminder to join <strong>{{ organization }}</strong> as a <strong>{{ position }}</strong>.</p>
+    <p>Invited by: {{ invited_by }}</p>
+    <p>
+        Click here to accept before it expires:<br>
+        <a href="{{ acceptance_url }}">{{ acceptance_url }}</a>
+    </p>
+    <p>Expires on: <strong>{{ expires_at }}</strong></p>
+    <br>
+    <p>Looking forward to having you with us!</p>
+</body>
+</html>
