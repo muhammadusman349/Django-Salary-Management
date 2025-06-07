@@ -16,10 +16,15 @@ class generatKey:
 
 
 class UserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'profile_pic', 'email', 'phone', 'role', 'is_approved', 'is_superuser', 'is_verified', 'is_staff', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'first_name', 'last_name', 'full_name', 'profile_pic', 'email', 'phone', 'role', 'is_approved', 'is_superuser', 'is_verified', 'is_staff', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ('created_at', 'updated_at')
+
+    def get_full_name(self, obj):
+        return obj.full_name
 
 
 class SignupSerializer(serializers.ModelSerializer):
