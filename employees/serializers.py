@@ -1,13 +1,23 @@
 from rest_framework import serializers
 from .models import Department, Position, Employee, Organization, EmployeeInvitation
 from accounts.serializers import UserSerializer, UserProfileSerializer
+from accounts.models import User
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    lead = UserSerializer(read_only=True)
+    lead_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='lead',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Department
-        fields = ('id', 'name', 'description', 'lead', 'created_at', 'updated_at')
-        read_only_fields = ('created_at', 'updated_at')
+        fields = ['id', 'name', 'description', 'lead', 'lead_id', 'created_at', 'updated_at']
+        read_only_fields = ['lead', 'created_at', 'updated_at']
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -15,8 +25,8 @@ class PositionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Position
-        fields = ('id', 'title', 'department', 'department_name','description', 'salary_range_min', 'salary_range_max', 'is_active', 'created_at', 'updated_at')
-        read_only_fields = ('created_at', 'updated_at')
+        fields = ['id', 'title', 'department', 'department_name','description', 'salary_range_min', 'salary_range_max', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -29,12 +39,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('id', 'user', 'added_by', 'position','position_title', 'department_name', 'status', 'date_of_birth', 'gender', 'marital_status',
+        fields = ['id', 'user', 'added_by', 'position','position_title', 'department_name', 'status', 'date_of_birth', 'gender', 'marital_status',
                 'nationality', 'address', 'city', 'state', 'country', 'postal_code', 'joining_date',
                 'leaving_date', 'personal_email', 'personal_phone', 'emergency_contact_name',
                 'emergency_contact_number', 'emergency_contact_relation', 'bank_name','age','tenure',
-                'bank_account_number', 'is_active', 'is_on_leave', 'created_at', 'updated_at')
-        read_only_fields = ('added_by', 'created_at', 'updated_at')
+                'bank_account_number', 'is_active', 'is_on_leave', 'created_at', 'updated_at']
+        read_only_fields = ['added_by', 'created_at', 'updated_at']
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', None)
@@ -53,8 +63,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
-        fields = ('id', 'name', 'admin', 'employees', 'created_at', 'updated_at')
-        read_only_fields = ('created_at', 'updated_at')
+        fields = ['id', 'name', 'admin', 'employees', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class EmployeeInvitationSerializer(serializers.ModelSerializer):
@@ -64,7 +74,7 @@ class EmployeeInvitationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeeInvitation
-        fields = ('id', 'email', 'status', 'token', 'organization', 'organization_name', 'position', 'position_title', 'department_name', 'invited_by', 'is_accepted', 'created_at', 'expires_at', 'last_sent_at')
+        fields = ['id', 'email', 'status', 'token', 'organization', 'organization_name', 'position', 'position_title', 'department_name', 'invited_by', 'is_accepted', 'created_at', 'expires_at', 'last_sent_at']
         read_only_fields = ['token', 'invited_by', 'is_accepted', 'created_at', 'expires_at', 'last_sent_at']
 
 
