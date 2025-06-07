@@ -78,3 +78,15 @@ class ResetPasswordView(generics.GenericAPIView):
         if serializer.is_valid():
             return Response({'password': 'successfully set New Password'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    queryset = User.objects.all().order_by('-id')
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        id = self.request.query_params.get('id')
+        if id:
+            queryset = queryset.filter(id=id)
+        return queryset

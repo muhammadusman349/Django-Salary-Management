@@ -68,6 +68,10 @@ class Position(models.Model):
     def __str__(self):
         return f"{self.title} at {self.department.name}"
 
+    @property
+    def department_name(self):
+        return self.department.name
+
 
 class PositionPermission(models.Model):
     code = models.CharField(max_length=120)
