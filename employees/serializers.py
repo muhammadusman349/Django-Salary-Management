@@ -61,10 +61,51 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
+    admin_detail = serializers.SerializerMethodField(read_only=True)
+    employees_detail = serializers.SerializerMethodField(read_only=True)
+    admin_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='admin',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    employee_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Employee.objects.all(),
+        source='employees',
+        write_only=True,
+        many=True,
+        required=False
+    )
+
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'admin', 'employees', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
+        fields = [
+            'id', 'name', 
+            'admin', 'admin_detail', 'admin_id',
+            'employees', 'employees_detail', 'employee_ids',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'admin', 'employees']
+
+    def get_admin_detail(self, obj):
+        if obj.admin:
+            return {
+                'id': obj.admin.id,
+                'username': obj.admin.full_name,
+                'first_name': obj.admin.first_name,
+                'last_name': obj.admin.last_name,
+                'email': obj.admin.email
+            }
+        return None
+
+    def get_employees_detail(self, obj):
+        return [{
+            'id': emp.id,
+            'first_name': emp.user.first_name,
+            'last_name': emp.user.last_name,
+            'position': emp.position.title if emp.position else None,
+        } for emp in obj.employees.all()]
 
 
 class EmployeeInvitationSerializer(serializers.ModelSerializer):
